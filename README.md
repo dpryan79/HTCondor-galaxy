@@ -1,7 +1,7 @@
 HTCondor Galaxy Docker Image
 ============================
 
-This repository acts as a layer on top of the Galaxy Docker image, providing support for using HTCondor on a remote server as a scheduler. For general setup of the underlying Galaxy Docker image, see it's page.
+This repository acts as a layer on top of the [Galaxy Docker](https://github.com/bgruening/docker-galaxy-stable) image, providing support for using [HTCondor](http://research.cs.wisc.edu/htcondor/) on a remote server as a scheduler for [Galaxy](http://galaxyproject.org/). For general setup of the underlying Galaxy Docker image, [see its page](https://github.com/bgruening/docker-galaxy-stable).
 
 Usage
 =====
