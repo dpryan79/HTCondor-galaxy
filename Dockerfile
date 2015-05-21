@@ -14,7 +14,6 @@ RUN chmod +x /usr/bin/configureCondor.py /usr/bin/startCondor.sh
 
 EXPOSE :80
 EXPOSE :21
-#Exposing the condor port is typically not needed, but just in case...
 EXPOSE :9618
 
 VOLUME ["/export/","/data/"]
