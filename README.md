@@ -97,6 +97,46 @@ You will need at least the following in `config/job_conf.xml`:
 
 The entry under "tools" for bowtie2 is just an example. Note that by default everything is run *within* the Docker container. The reason for this is that things like uploading files use python programs that require modules specific to Galaxy. Unless you happen to have Galaxy installed on each of your runner nodes, none of these python scripts will work. Consequently, it's simplest to specify tools that you instead want to run remotely. Things from the toolshed (e.g., bedtools, bowtie2, bwa, etc.) will typically work. You then need to add an entry for each of these under the "tools" section.
 
+Using multiple threads
+----------------------
+
+You can request that a particular tool uses multiple threads as follows:
+
+ 1) Create a destination with a unique `id` and `runner="condor"`.
+   * Add a `<param id="request_cpus">X</param>` line, where `X` is the number of threads you would like to use.
+ 2) Change the job's destination to use that.
+
+As an example, to run bowtie2 with 4 cores, the following would work:
+
+    <?xml version="1.0"?>
+    <job_conf>
+        <plugins workers="2">
+            <plugin id="local" type="runner" load="galaxy.jobs.runners.local:LocalJobRunner"/>
+            <plugin id="condor" type="runner" load="galaxy.jobs.runners.condor:CondorJobRunner"/>
+        </plugins>
+        <handlers default="handlers">
+            <handler id="handler0" tags="handlers"/>
+            <handler id="handler1" tags="handlers"/>
+        </handlers>
+        <destinations default="local">
+            <destination id="local" runner="local"/>
+            <destination id="condor" runner="condor"/>
+            <destination id="condor4threads" runner="condor">
+                <param id="request_cpus">4</param>
+            </destination>
+        </destinations>
+        <tools>
+            <tool id="toolshed.g2.bx.psu.edu/repos/devteam/bowtie2/bowtie2/0.4" destination="condor4threads"/>
+        </tools>
+    </job_conf>
+
+This alone will not actually work, since HTCondor will not default to allowing multithreading. The simplest method around this is to utilize repartitionable slots. Adding the following to your `condor_config` file to fully enable multithreading:
+
+    NUM_SLOTS = 1
+    NUM_SLOTS_TYPE_1 = 1
+    SLOT_TYPE_1 = cpus=100%
+    SLOT_TYPE_1_PARTITIONABLE = TRUE
+
 Unresolved issues
 -----------------
 
