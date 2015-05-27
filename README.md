@@ -88,14 +88,16 @@ You will need at least the following in `config/job_conf.xml`:
         </handlers>
         <destinations default="local">
             <destination id="local" runner="local"/>
-            <destination id="condor" runner="condor"/>
+            <destination id="condor" runner="condor">
+                <param id="embed_metadata_in_job">False</param>
+            </destination>
         </destinations>
         <tools>
             <tool id="toolshed.g2.bx.psu.edu/repos/devteam/bowtie2/bowtie2/0.4" destination="condor"/>
         </tools>
     </job_conf>
 
-The entry under "tools" for bowtie2 is just an example. Note that by default everything is run *within* the Docker container. The reason for this is that things like uploading files use python programs that require modules specific to Galaxy. Unless you happen to have Galaxy installed on each of your runner nodes, none of these python scripts will work. Consequently, it's simplest to specify tools that you instead want to run remotely. Things from the toolshed (e.g., bedtools, bowtie2, bwa, etc.) will typically work. You then need to add an entry for each of these under the "tools" section.
+The entry under "tools" for bowtie2 is just an example. Note that by default everything is run *within* the Docker container. The reason for this is that things like uploading files use python programs that require modules specific to Galaxy. Unless you happen to have Galaxy installed on each of your runner nodes, none of these python scripts will work. Consequently, it's simplest to specify tools that you instead want to run remotely. Things from the toolshed (e.g., bedtools, bowtie2, bwa, etc.) will typically work. You then need to add an entry for each of these under the "tools" section. Note that *you must include the `<param id="embed_metadata_in_job">False</param>` line!* If you do not, jobs will run properly but metadata on the job will *not* be set.
 
 Using multiple threads
 ----------------------
@@ -120,9 +122,12 @@ As an example, to run bowtie2 with 4 cores, the following would work:
         </handlers>
         <destinations default="local">
             <destination id="local" runner="local"/>
-            <destination id="condor" runner="condor"/>
+            <destination id="condor" runner="condor">
+                <param id="embed_metadata_in_job">False</param>
+            </destination>
             <destination id="condor4threads" runner="condor">
                 <param id="request_cpus">4</param>
+                <param id="embed_metadata_in_job">False</param>
             </destination>
         </destinations>
         <tools>
@@ -140,11 +145,4 @@ This alone will not actually work, since HTCondor will not default to allowing m
 Unresolved issues
 -----------------
 
-There is currently one unresolved problem. After jobs are run on a runner node, the jobs attempts to update its metadata. This uses a python script that attempts to import a Galaxy-specific module. Since this step runs outside of docker it fails. Consequently you'll typically see the following in stderr for each job run remotely:
-
-    Traceback (most recent call last):
-    File "/export/galaxy-central/database/job_working_directory/000/132/set_metadata_M9CksR.py", line 1, in <module>
-        from galaxy_ext.metadata.set_metadata import set_metadata; set_metadata()
-    ImportError: No module named galaxy_ext.metadata.set_metadata
-
-Some of the specifics will be different for each job. The job will still complete and the results will still be handled seemingly properly by Galaxy. An issue in [the Galaxy Trello board](https://trello.com/c/KnvdRRlj) has been made for this bug. It's currently unclear how big of a problem this is.
+The implementation of the HTCondor job runner currently in galaxy doesn't support being run inside Docker, due to attempting to set metadata on the runner nodes, which is impossible. The job runner included here has been modified to fix this problem. An [appropriate pull request](https://github.com/galaxyproject/galaxy/pull/289) has been made. See also the original error reported to [the Galaxy Trello board](https://trello.com/c/KnvdRRlj).
